@@ -148,7 +148,13 @@ async fn serve_connection(stream: TcpStream, router: Arc<Router>) -> Result<(), 
         let line = line.trim_end();
         let mut parts = line.splitn(3, ' ');
         let method_str = parts.next().unwrap_or("").to_uppercase();
-        let path = parts.next().unwrap_or("/").to_owned();
+        let raw = parts.next().unwrap_or("/");
+        let (path, query) = match raw.find('?') {
+            Some(i) => (&raw[..i], &raw[i + 1..]),
+            None    => (raw, ""),
+        };
+        let path = path.to_owned();
+        let query = query.to_owned();
         let Ok(method) = method_str.parse::<Method>() else { break };
         // HTTP version field ignored — nginx guarantees HTTP/1.1
 
@@ -170,7 +176,7 @@ async fn serve_connection(stream: TcpStream, router: Arc<Router>) -> Result<(), 
         // ── Dispatch ──────────────────────────────────────────────────────────
         let response = match router.lookup(method, &path) {
             Some((handler, params)) => {
-                handler.call(Request::new(body, headers, method, params, path)).await
+                handler.call(Request::new(body, headers, method, params, path, query)).await
             }
             None => Response::status(Status::NotFound),
         };

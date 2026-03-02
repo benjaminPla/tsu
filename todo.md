@@ -8,7 +8,5 @@
 - [x] clean README.md file (philosophy, reverse-proxy, etc) and refer to the docs - mainteining both is a mess
 - [x] ensure `examples/` is excluded from the published crate
 - [ ] set up `cargo publish` pipeline
-
-## ai suggestions
-
-- [ ] handle query strings in the path parser (strip before matchit lookup)
+- [ ] remove all `unwrap()` and others similar, standarize an error
+- [ ] bug getting more than one query param

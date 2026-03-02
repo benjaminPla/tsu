@@ -9,6 +9,14 @@ astor adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `Request::query()` — returns the raw query string (without `?`), empty string if absent. Query strings are now stripped from the path before router lookup, so `GET /users/42?page=1` correctly matches `/users/{id}`.
+
+### Changed
+
+- README trimmed to philosophy + quick start; nginx and Kubernetes config moved to [docs.rs/astor](https://docs.rs/astor).
+
 ---
 
 ## [0.2.1] — 2026-03-02

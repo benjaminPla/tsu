@@ -7,6 +7,7 @@
 //!   curl http://localhost:3000/healthz
 //!   curl http://localhost:3000/readyz
 //!   curl http://localhost:3000/redirect
+//!   curl "http://localhost:3000/users?page=2&limit=10"
 //!   curl http://localhost:3000/users/42
 //!   curl http://localhost:3000/xml
 //!   curl -X DELETE http://localhost:3000/users/42
@@ -24,6 +25,7 @@ async fn main() {
         .on(Method::Get,    "/healthz",    liveness)
         .on(Method::Get,    "/readyz",     readiness)
         .on(Method::Get,    "/redirect",   redirect)
+        .on(Method::Get,    "/users",      list_users)
         .on(Method::Get,    "/users/{id}", get_user)
         .on(Method::Get,    "/xml",        xml_response)
         .on(Method::Patch,  "/users/{id}", update_user)
@@ -39,6 +41,18 @@ async fn main() {
 // if your app needs a warm-up period before serving traffic.
 async fn liveness(_req: Request) -> Response { Response::text("ok") }
 async fn readiness(_req: Request) -> Response { Response::text("ready") }
+
+// ── GET /users ────────────────────────────────────────────────────────────────
+//
+// req.query() returns the raw query string without the leading '?'.
+// Parse it with serde_qs, form_urlencoded, or split manually — astor
+// does not interpret query parameters, and the route matches regardless
+// of whether a query string is present.
+async fn list_users(req: Request) -> Response {
+    // "page=2&limit=10" or "" if no query string
+    let qs = req.query();
+    Response::json(format!(r#"{{"query":"{qs}","users":[]}}"#).into_bytes())
+}
 
 // ── GET /users/{id} ───────────────────────────────────────────────────────────
 //

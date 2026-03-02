@@ -39,6 +39,7 @@ pub struct Request {
     pub(crate) method: Method,
     pub(crate) params: HashMap<String, String>,
     pub(crate) path: String,
+    pub(crate) query: String,
 }
 
 impl Request {
@@ -48,21 +49,34 @@ impl Request {
         method: Method,
         params: HashMap<String, String>,
         path: String,
+        query: String,
     ) -> Self {
-        Self { body, headers, method, params, path }
+        Self { body, headers, method, params, path, query }
     }
 
     /// Returns the HTTP method.
     pub fn method(&self) -> Method { self.method }
 
-    /// Returns the request path as sent by nginx, including the query string
-    /// if present.
+    /// Returns the request path, without the query string.
     ///
-    /// Note: query strings are not stripped before routing. If your route is
-    /// `/users/{id}` and the client sends `/users/42?foo=bar`, the router
-    /// will not match — strip query strings in nginx or handle them explicitly.
-    /// See the [ai suggestions in todo.md] for the planned fix.
+    /// For a request URI of `/users/42?page=1` this returns `/users/42`.
     pub fn path(&self) -> &str { &self.path }
+
+    /// Returns the raw query string, without the leading `?`.
+    ///
+    /// Empty string if the request had no query string.
+    /// Parse it with `serde_qs`, `form_urlencoded`, or a manual split —
+    /// astor does not interpret query parameters.
+    ///
+    /// ```rust,no_run
+    /// # use astor::{Request, Response};
+    /// async fn handler(req: Request) -> Response {
+    ///     // e.g. GET /search?q=rust&page=2
+    ///     let qs = req.query(); // "q=rust&page=2"
+    ///     Response::text(qs)
+    /// }
+    /// ```
+    pub fn query(&self) -> &str { &self.query }
 
     /// Returns all request headers as name-value pairs.
     ///
