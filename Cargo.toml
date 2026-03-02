@@ -10,6 +10,7 @@ homepage = "https://github.com/benjaminPla/astor"
 documentation = "https://docs.rs/astor"
 keywords = ["async", "framework", "http", "tokio", "web"]
 categories = ["web-programming::http-server", "asynchronous"]
+exclude = ["todo.md", "CONTRIBUTING.md", ".gitignore"]
 
 [dependencies]
 matchit = "0.8"
