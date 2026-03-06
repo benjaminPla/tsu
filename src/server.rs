@@ -53,6 +53,7 @@ use tokio::net::{TcpListener, TcpStream};
 
 use crate::error::Error;
 use crate::method::Method;
+use crate::middleware::Next;
 use crate::request::Request;
 use crate::response::Response;
 use crate::router::Router;
@@ -195,8 +196,9 @@ async fn serve_connection(stream: TcpStream, router: Arc<Router>) -> Result<(), 
 
         // ── Dispatch ──────────────────────────────────────────────────────────
         let response = match router.lookup(method, &path) {
-            Some((handler, params)) => {
-                handler.call(Request::new(body, headers, method, params, path, query)).await
+            Some((handler, middleware, params)) => {
+                let req = Request::new(body, headers, method, params, path, query);
+                Next::new(middleware, handler).call(req).await
             }
             None => Response::status(Status::NotFound),
         };

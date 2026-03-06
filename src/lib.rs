@@ -36,9 +36,9 @@
 //! #[tokio::main]
 //! async fn main() {
 //!     let app = Router::new()
-//!         .on(Method::Delete, "/users/{id}", delete_user)
-//!         .on(Method::Get,    "/users/{id}", get_user)
-//!         .on(Method::Post,   "/users",      create_user);
+//!         .on(Method::Delete, "/users/{id}", delete_user, ())
+//!         .on(Method::Get,    "/users/{id}", get_user,    ())
+//!         .on(Method::Post,   "/users",      create_user, ());
 //!
 //!     Server::bind("0.0.0.0:3000").serve(app).await.unwrap();
 //! }
@@ -125,7 +125,7 @@
 //!
 //! | Type | Purpose |
 //! |---|---|
-//! | [`Router`] | Register routes — `Router::new().on(method, path, handler)` |
+//! | [`Router`] | Register routes — `Router::new().on(method, path, handler, extra_mw)` |
 //! | [`Server`] | Bind a port and serve — `Server::bind(addr).serve(router)` |
 //! | [`Request`] | Incoming request — method, path, headers, body, params |
 //! | [`Response`] | Outgoing response — shortcuts + typed builder |
@@ -148,6 +148,7 @@ pub mod middleware;
 pub use error::Error;
 pub use handler::Handler;
 pub use method::Method;
+pub use middleware::{Middleware, Next};
 pub use request::Request;
 pub use response::{ContentType, IntoResponse, Response};
 pub use router::Router;

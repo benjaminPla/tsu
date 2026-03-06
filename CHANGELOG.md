@@ -9,12 +9,21 @@ astor adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [0.3.0] — 2026-03-06
+
 ### Added
 
+- `Middleware` trait — sealed blanket impl for `async fn(Request, Next) -> Response`. Any function with that signature is a middleware.
+- `Next` struct — drives the middleware chain. Call `next.call(req).await` to proceed; return a `Response` directly to short-circuit.
+- `Router::middleware(mw)` — register global middleware applied to every route declared after the call.
+- `Router::merge(other)` — compose sub-routers. Each sub-router's middleware chain is pre-built at startup; `merge` does not retroactively apply the parent router's global middleware to merged routes.
 - `Request::query()` — returns the raw query string (without `?`), empty string if absent. Query strings are now stripped from the path before router lookup, so `GET /users/42?page=1` correctly matches `/users/{id}`.
 
 ### Changed
 
+- **Breaking:** `Router::on` now takes four parameters: `(method, path, handler, extra_middleware)`. Pass `()` as the fourth argument for routes with no extra middleware.
 - README trimmed to philosophy + quick start; nginx and Kubernetes config moved to [docs.rs/astor](https://docs.rs/astor).
 
 ---
@@ -75,7 +84,8 @@ First release. The foundation is here. Radix-tree routing, raw HTTP/1.1 parsing,
 - nginx and Kubernetes deployment configuration documented in `README.md`.
 - Raw tokio HTTP/1.1 parsing — no hyper, no http crate.
 
-[Unreleased]: https://github.com/benjaminPla/astor/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/benjaminPla/astor/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/benjaminPla/astor/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/benjaminPla/astor/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/benjaminPla/astor/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/benjaminPla/astor/compare/v0.1.0...v0.1.1

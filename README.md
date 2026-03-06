@@ -28,7 +28,7 @@ What changes between services is exactly what astor covers:
 ```toml
 # Cargo.toml
 [dependencies]
-astor = "0.2"
+astor = "0.3"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
@@ -38,10 +38,10 @@ use astor::{Method, Request, Response, Router, Server, Status};
 #[tokio::main]
 async fn main() {
     let app = Router::new()
-        .on(Method::Get,    "/users",      list_users)
-        .on(Method::Get,    "/users/{id}", get_user)
-        .on(Method::Post,   "/users",      create_user)
-        .on(Method::Delete, "/users/{id}", delete_user);
+        .on(Method::Get,    "/users",      list_users,  ())
+        .on(Method::Get,    "/users/{id}", get_user,    ())
+        .on(Method::Post,   "/users",      create_user, ())
+        .on(Method::Delete, "/users/{id}", delete_user, ());
 
     Server::bind("0.0.0.0:3000").serve(app).await.unwrap();
 }
@@ -80,6 +80,51 @@ cargo run --example basic
 curl http://localhost:3000/users/42
 curl "http://localhost:3000/users?page=2&limit=10"
 ```
+
+---
+
+## Middleware
+
+Middleware runs as an ordered chain: global (router-level) first, then per-route extras, then the handler. The chain is baked into each route at startup — no runtime composition.
+
+```rust
+use astor::{Next, Request, Response, Router, Status};
+
+async fn require_auth(req: Request, next: Next) -> Response {
+    match req.header("authorization") {
+        Some(_) => next.call(req).await,           // proceed
+        None    => Response::status(Status::Unauthorized), // short-circuit
+    }
+}
+
+async fn ownership_check(req: Request, next: Next) -> Response {
+    // verify ownership, then proceed
+    next.call(req).await
+}
+```
+
+**Global middleware** applies to every route registered after `.middleware()`:
+
+```rust
+let users = Router::new()
+    .middleware(require_auth)                                    // applied to all routes below
+    .on(Method::Get,    "/users",      list_users,   ())        // chain: [require_auth]
+    .on(Method::Put,    "/users/{id}", update_user,  ownership_check) // chain: [require_auth, ownership_check]
+    .on(Method::Delete, "/users/{id}", delete_user,  ownership_check);
+```
+
+**Sub-router composition** via `.merge()` — each sub-router keeps its own chain:
+
+```rust
+let public   = Router::new().on(Method::Get, "/health", health, ());
+let users    = Router::new().middleware(require_auth).on(/* ... */);
+let products = Router::new().middleware(require_auth).on(/* ... */);
+
+let app = Router::new().merge(public).merge(users).merge(products);
+Server::bind("0.0.0.0:3000").serve(app).await.unwrap();
+```
+
+Pass `()` as the fourth argument to `.on()` when a route needs no extra middleware.
 
 ---
 
